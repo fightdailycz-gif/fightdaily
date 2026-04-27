@@ -525,10 +525,6 @@ export default function FightDaily() {
           <Icon name="volume_up" size={22} weight={500} />
         </IconBtn>
       </div>
-
-      <div style={S.footerHint}>
-        {audioReady ? "ZVUK AKTIVNÍ · MUZIKA HRAJE DÁL" : "TAPNI PRO AKTIVACI"}
-      </div>
     </div>
   );
 }
@@ -576,7 +572,10 @@ function CircleTimer({ progress, ringColor, ringWidth, timeText, sub, onSettings
   // Použij fixní viewBox velikost pro SVG matiku, ale renderuj responzivně přes clamp()
   // min 240px, max 340px, prefer 70vmin (70% kratší strany viewportu)
   const SIZE = 320; // logická velikost pro výpočty viewBoxu
-  const R_inner = (SIZE - ringWidth - 6) / 2;
+  // R je fixní — používáme max ringWidth (22) pro výpočet, takže kruh
+  // nemění velikost při přechodu z normal (12) → GO (22) → zpět
+  const MAX_RING = 22;
+  const R_inner = (SIZE - MAX_RING - 6) / 2;
   const cx = SIZE / 2, cy = SIZE / 2;
   const circ = 2 * Math.PI * R_inner;
 
