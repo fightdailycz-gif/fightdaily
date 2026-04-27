@@ -1045,15 +1045,17 @@ const S = {
   },
 };
 
-// Inject Geist font + Material Symbols + global resets
+// Global resets + Material Symbols base class.
+// Fonty samotné jsou loadnuté v <head> (app/layout.tsx) — žádný @import zde,
+// abychom předešli FOUC (flash of unstyled content).
 function Style() {
   return (
     <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&display=swap');
-      @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
       * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
       body { margin: 0; background: #000; }
       button:disabled { cursor: default; }
+
+      /* Material Symbols base class */
       .ms {
         font-family: 'Material Symbols Rounded';
         font-weight: normal;
@@ -1068,6 +1070,8 @@ function Style() {
         -webkit-font-feature-settings: 'liga';
         -webkit-font-smoothing: antialiased;
         user-select: none;
+        /* font-display: block v Google URL = neukáže text-fallback,
+           jen prázdný prostor po dobu načítání (max 3s) → žádné "settings" napsané textem */
       }
     `}</style>
   );
