@@ -116,10 +116,6 @@ const ALARMS = [
   { id:"buzzer",     label:"BUZZER",   icon:"electric_bolt",        fn:playBuzzer,     desc:"Elektrický bzučák" },
   { id:"bell",       label:"ZVON",     icon:"notifications",        fn:playBell,       desc:"Boxerský zvon" },
   { id:"tripleBell", label:"3× ZVON",  icon:"notifications_active", fn:playTripleBell, desc:"Trojitý zvon" },
-  { id:"doubleHorn", label:"2× HORN",  icon:"volume_up",            fn:playDoubleHorn, desc:"Dvojitý roh" },
-  { id:"siren",      label:"SIRÉNA",   icon:"siren",                fn:playSiren,      desc:"Výstražná siréna" },
-  { id:"fanfare",    label:"FANFÁRA",  icon:"music_note",           fn:playFanfare,    desc:"Boxerský nástup" },
-  { id:"schoolBell", label:"ZVONEK",   icon:"doorbell",             fn:playSchoolBell, desc:"Školní zvonek" },
 ];
 
 // =============================================================================
@@ -577,19 +573,33 @@ function getRoundState(num, t) {
 // =============================================================================
 
 function CircleTimer({ progress, ringColor, ringWidth, timeText, sub, onSettings, timeColor, isWarning }) {
-  const SIZE = 320;
-  const R = (SIZE - ringWidth - 6) / 2;
+  // Použij fixní viewBox velikost pro SVG matiku, ale renderuj responzivně přes clamp()
+  // min 240px, max 340px, prefer 70vmin (70% kratší strany viewportu)
+  const SIZE = 320; // logická velikost pro výpočty viewBoxu
+  const R_inner = (SIZE - ringWidth - 6) / 2;
   const cx = SIZE / 2, cy = SIZE / 2;
-  const circ = 2 * Math.PI * R;
+  const circ = 2 * Math.PI * R_inner;
+
+  // CSS responsive size — funguje od malého iPhone SE až po desktop
+  const cssSize = "clamp(240px, 65vmin, 340px)";
 
   return (
-    <div style={{ position: "relative", width: SIZE, height: SIZE, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <svg width={SIZE} height={SIZE} style={{ transform: "rotate(-90deg)" }}>
+    <div style={{
+      position: "relative",
+      width: cssSize, height: cssSize,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      flexShrink: 0,
+    }}>
+      <svg
+        viewBox={`0 0 ${SIZE} ${SIZE}`}
+        width="100%" height="100%"
+        style={{ transform: "rotate(-90deg)" }}
+      >
         {/* Track */}
-        <circle cx={cx} cy={cy} r={R} fill="none" stroke="#1A1A1A" strokeWidth={ringWidth}
+        <circle cx={cx} cy={cy} r={R_inner} fill="none" stroke="#1A1A1A" strokeWidth={ringWidth}
           style={{ transition: "stroke-width 0.4s" }} />
         {/* Progress */}
-        <circle cx={cx} cy={cy} r={R} fill="none"
+        <circle cx={cx} cy={cy} r={R_inner} fill="none"
           stroke={ringColor} strokeWidth={ringWidth}
           strokeLinecap="butt"
           strokeDasharray={circ}
@@ -600,7 +610,7 @@ function CircleTimer({ progress, ringColor, ringWidth, timeText, sub, onSettings
         />
         {/* Glow halo when warning */}
         {isWarning && (
-          <circle cx={cx} cy={cy} r={R} fill="none"
+          <circle cx={cx} cy={cy} r={R_inner} fill="none"
             stroke={ringColor} strokeWidth={ringWidth + 4}
             strokeLinecap="butt"
             strokeDasharray={circ}
@@ -614,7 +624,7 @@ function CircleTimer({ progress, ringColor, ringWidth, timeText, sub, onSettings
       <div style={{
         position: "absolute",
         display: "flex", flexDirection: "column", alignItems: "center",
-        gap: 12,
+        gap: 10,
       }}>
         <button onClick={onSettings} style={S.settingsPill}>
           <Icon name="settings" size={16} weight={500} />
@@ -622,7 +632,7 @@ function CircleTimer({ progress, ringColor, ringWidth, timeText, sub, onSettings
         </button>
 
         <div style={{
-          fontSize: timeText === "DONE" ? 56 : 76,
+          fontSize: timeText === "DONE" ? "clamp(40px, 11vmin, 56px)" : "clamp(54px, 14vmin, 76px)",
           fontWeight: 800,
           letterSpacing: timeText === "DONE" ? 4 : -2,
           lineHeight: 1,
@@ -634,10 +644,10 @@ function CircleTimer({ progress, ringColor, ringWidth, timeText, sub, onSettings
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, marginTop: 2 }}>
-          <div style={{ fontSize: 18, fontWeight: 500, color: C.white, lineHeight: 1.2 }}>
+          <div style={{ fontSize: "clamp(15px, 3.5vmin, 18px)", fontWeight: 500, color: C.white, lineHeight: 1.2 }}>
             {sub.main}
           </div>
-          <div style={{ fontSize: 13, color: C.textDim, fontWeight: 400 }}>
+          <div style={{ fontSize: "clamp(11px, 2.5vmin, 13px)", color: C.textDim, fontWeight: 400 }}>
             {sub.next}
           </div>
         </div>
@@ -770,11 +780,11 @@ function IconBtn({ onClick, disabled, active, children }) {
 // =============================================================================
 function SettingsView({ t, setSetting, onBack, playPreview }) {
   return (
-    <div style={S.app}>
+    <div style={S.appScroll}>
       <Style />
 
-      {/* HEADER with back */}
-      <header style={{ ...S.header, position: "relative", justifyContent: "center" }}>
+      {/* STICKY HEADER with back */}
+      <header style={{ ...S.stickyHeader, position: "sticky", top: 0 }}>
         <button onClick={onBack} style={{
           position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)",
           background: "transparent", border: "none", color: C.white,
@@ -788,7 +798,7 @@ function SettingsView({ t, setSetting, onBack, playPreview }) {
         </div>
       </header>
 
-      <div style={{ width: "100%", maxWidth: 440, padding: "8px 16px 24px", display: "flex", flexDirection: "column", gap: 14, flex: 1, overflowY: "auto" }}>
+      <div style={{ width: "100%", maxWidth: 440, padding: "16px 16px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
 
         {/* 2x2 GRID */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -946,18 +956,41 @@ function Separator() {
 // STYLES (shared)
 // =============================================================================
 const S = {
+  // Timer view — fixed viewport, no scroll, mezery rozdělené přes justify-content: space-between
   app: {
-    minHeight: "100vh",
+    height: "100dvh",        // dynamic viewport height — kompenzuje iOS top/bottom bary
+    minHeight: "100dvh",
+    maxHeight: "100dvh",
+    overflow: "hidden",      // ŽÁDNÉ scrollování
     background: C.bg,
     color: C.white,
     fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "space-between",
-    padding: "0 0 24px",
+    padding: "0 0 16px",
+  },
+  // Settings view — scrollovatelný obsah, ale header bude sticky
+  appScroll: {
+    minHeight: "100dvh",
+    background: C.bg,
+    color: C.white,
+    fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    display: "flex", flexDirection: "column",
+    alignItems: "center",
   },
   header: {
     width: "100%",
-    padding: "20px 16px 12px",
+    padding: "16px 16px 8px",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
+  },
+  // Sticky header pro settings view
+  stickyHeader: {
+    position: "sticky", top: 0, zIndex: 10,
+    width: "100%",
+    padding: "16px 16px 14px",
+    background: C.bg,
+    borderBottom: "1px solid #1a1a1a",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
   brand: {
@@ -967,20 +1000,23 @@ const S = {
     color: C.white,
   },
   phaseLabel: {
-    fontSize: 56,
+    fontSize: "clamp(40px, 11vmin, 56px)",
     fontWeight: 900,
     letterSpacing: -1,
     lineHeight: 1,
     transition: "color 0.4s, text-shadow 0.4s",
+    flexShrink: 0,
   },
   rounds: {
     display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap",
     maxWidth: 380, padding: "0 16px",
+    flexShrink: 0,
   },
   controls: {
     display: "flex", alignItems: "center", justifyContent: "space-between",
     width: "100%", maxWidth: 380, padding: "0 20px",
     gap: 8,
+    flexShrink: 0,
   },
   settingsPill: {
     display: "flex", alignItems: "center", gap: 8,
@@ -993,8 +1029,9 @@ const S = {
   footerHint: {
     fontSize: 9, color: "#222", letterSpacing: 2, fontWeight: 700, textAlign: "center",
     marginTop: 4,
+    flexShrink: 0,
   },
-  // settings
+  // settings cards
   gridCard: {
     background: C.card, border: `1px solid ${C.cardBorder}`,
     borderRadius: 14, padding: "12px 14px",

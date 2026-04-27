@@ -11,8 +11,14 @@ export const metadata: Metadata = {
     title: "FightDaily",
   },
   icons: {
-    icon: "/icon-192.png",
-    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: "/fightdaily-favicon.ico", sizes: "any" },
+      { url: "/fightdaily-icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/fightdaily-favicon.ico",
+    apple: [
+      { url: "/fightdaily-apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 
