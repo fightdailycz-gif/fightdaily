@@ -478,7 +478,7 @@ export default function FightDaily() {
     <div style={S.app}>
       <Style />
 
-      <Navbar />
+      <Navbar bordered />
 
       {/* PHASE LABEL */}
       <div style={{
@@ -707,15 +707,18 @@ const PauseIcon = () => <Icon name="pause" size={32} fill weight={700} />;
 // Vždy obsahuje logo uprostřed, volitelně levý a pravý slot.
 // Respektuje iOS safe-area-inset-top, takže se nemísí se statusbarem ani
 // notch / dynamic island. Sticky pozice je optional přes prop `sticky`.
-function Navbar({ left, right, sticky = false }) {
+function Navbar({ left, right, sticky = false, bordered = false }) {
+  // Slot height = výška NavBackButton (icon 22px + padding 8+8 = 38px)
+  // Pevná hodnota pro celý grid → navbar má stejnou výšku ve všech views
+  // bez ohledu na to, zda jsou sloty plné nebo prázdné.
+  const SLOT_HEIGHT = 38;
+
   return (
     <header
       style={{
-        ...(sticky
-          ? { position: "sticky", top: 0, zIndex: 10, background: C.bg, borderBottom: "1px solid #1a1a1a" }
-          : {}),
+        ...(sticky ? { position: "sticky", top: 0, zIndex: 10, background: C.bg } : {}),
+        ...(bordered || sticky ? { borderBottom: "1px solid #1a1a1a" } : {}),
         width: "100%",
-        // safe-area kompenzuje iOS statusbar / dynamic island
         paddingTop: "calc(env(safe-area-inset-top) + 14px)",
         paddingBottom: 14,
         paddingLeft: 16,
@@ -726,18 +729,15 @@ function Navbar({ left, right, sticky = false }) {
         flexShrink: 0,
       }}
     >
-      {/* Levý slot */}
-      <div style={{ display: "flex", justifyContent: "flex-start" }}>
+      <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", height: SLOT_HEIGHT }}>
         {left}
       </div>
 
-      {/* Logo uprostřed */}
-      <div style={{ display: "flex", justifyContent: "center" }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: SLOT_HEIGHT }}>
         <Logo height={18} />
       </div>
 
-      {/* Pravý slot */}
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", height: SLOT_HEIGHT }}>
         {right}
       </div>
     </header>
