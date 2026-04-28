@@ -478,10 +478,7 @@ export default function FightDaily() {
     <div style={S.app}>
       <Style />
 
-      {/* HEADER */}
-      <header style={S.header}>
-        <Logo height={18} />
-      </header>
+      <Navbar />
 
       {/* PHASE LABEL */}
       <div style={{
@@ -704,6 +701,67 @@ function PlayBtn({ t, onClick }) {
 const PlayIcon = () => <Icon name="play_arrow" size={36} fill weight={700} />;
 const PauseIcon = () => <Icon name="pause" size={32} fill weight={700} />;
 
+// =============================================================================
+// NAVBAR — sjednocený header napříč aplikací
+// =============================================================================
+// Vždy obsahuje logo uprostřed, volitelně levý a pravý slot.
+// Respektuje iOS safe-area-inset-top, takže se nemísí se statusbarem ani
+// notch / dynamic island. Sticky pozice je optional přes prop `sticky`.
+function Navbar({ left, right, sticky = false }) {
+  return (
+    <header
+      style={{
+        ...(sticky
+          ? { position: "sticky", top: 0, zIndex: 10, background: C.bg, borderBottom: "1px solid #1a1a1a" }
+          : {}),
+        width: "100%",
+        // safe-area kompenzuje iOS statusbar / dynamic island
+        paddingTop: "calc(env(safe-area-inset-top) + 14px)",
+        paddingBottom: 14,
+        paddingLeft: 16,
+        paddingRight: 16,
+        display: "grid",
+        gridTemplateColumns: "44px 1fr 44px",
+        alignItems: "center",
+        flexShrink: 0,
+      }}
+    >
+      {/* Levý slot */}
+      <div style={{ display: "flex", justifyContent: "flex-start" }}>
+        {left}
+      </div>
+
+      {/* Logo uprostřed */}
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <Logo height={18} />
+      </div>
+
+      {/* Pravý slot */}
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        {right}
+      </div>
+    </header>
+  );
+}
+
+// Tlačítko back používané v Navbar (settings → timer)
+function NavBackButton({ onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: "transparent", border: "none", color: C.white,
+        cursor: "pointer", padding: 8, lineHeight: 1,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontFamily: "inherit",
+      }}
+      aria-label="Zpět"
+    >
+      <Icon name="arrow_back" size={22} weight={500} />
+    </button>
+  );
+}
+
 function Logo({ height = 18, color = "currentColor" }) {
   const w = (height * 137) / 18;
   return (
@@ -782,20 +840,10 @@ function SettingsView({ t, setSetting, onBack, playPreview }) {
     <div style={S.appScroll}>
       <Style />
 
-      {/* STICKY HEADER with back */}
-      <header style={{ ...S.stickyHeader, position: "sticky", top: 0 }}>
-        <button onClick={onBack} style={{
-          position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)",
-          background: "transparent", border: "none", color: C.white,
-          cursor: "pointer", padding: 8, lineHeight: 1,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <Icon name="arrow_back" size={22} weight={500} />
-        </button>
-        <div style={{ ...S.brand, color: C.white, letterSpacing: 0, fontSize: 17, fontWeight: 500 }}>
-          Nastavení
-        </div>
-      </header>
+      <Navbar
+        sticky
+        left={<NavBackButton onClick={onBack} />}
+      />
 
       <div style={{ width: "100%", maxWidth: 440, padding: "16px 16px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
 
@@ -955,20 +1003,21 @@ function Separator() {
 // STYLES (shared)
 // =============================================================================
 const S = {
-  // Timer view — fixed viewport, no scroll, mezery rozdělené přes justify-content: space-between
+  // Timer view — fixed viewport, no scroll
   app: {
-    height: "100dvh",        // dynamic viewport height — kompenzuje iOS top/bottom bary
+    height: "100dvh",
     minHeight: "100dvh",
     maxHeight: "100dvh",
-    overflow: "hidden",      // ŽÁDNÉ scrollování
+    overflow: "hidden",
     background: C.bg,
     color: C.white,
     fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "space-between",
-    padding: "0 0 16px",
+    // Safe-area-bottom kompenzuje home indicator iPhonu, +16px breathing room
+    paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)",
   },
-  // Settings view — scrollovatelný obsah, ale header bude sticky
+  // Settings view — scrollovatelný
   appScroll: {
     minHeight: "100dvh",
     background: C.bg,
@@ -976,6 +1025,7 @@ const S = {
     fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     display: "flex", flexDirection: "column",
     alignItems: "center",
+    paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)",
   },
   header: {
     width: "100%",

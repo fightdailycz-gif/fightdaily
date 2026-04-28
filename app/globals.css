@@ -9,17 +9,18 @@ html, body {
 }
 
 body {
-  /* iOS safe areas — kompenzuje notch a home indicator přes padding na #__next */
   min-height: 100dvh;
 }
 
-/* Next.js root wrapper respektuje safe areas */
+/* Next.js root wrapper — safe areas si komponenty řeší samy:
+   - Navbar má padding-top: env(safe-area-inset-top)
+   - Tlačítka dole používají padding-bottom přes inline style
+   Tady jen kompenzujeme levou/pravou safe-area na landscape orientacích */
 body > div {
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
   box-sizing: border-box;
+  min-height: 100dvh;
 }
 
 * {
