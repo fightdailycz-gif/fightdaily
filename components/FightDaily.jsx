@@ -119,6 +119,25 @@ const ALARMS = [
 ];
 
 // =============================================================================
+// ANALYTICS — Google Analytics 4, načítá se jen po souhlasu
+// =============================================================================
+const COOKIE_KEY = "fightdaily_cookie_v1";
+const GA_ID = "G-VHQTT6JC31";
+
+function loadGA() {
+  if (typeof window === "undefined" || window.__gaLoaded) return;
+  window.__gaLoaded = true;
+  const s = document.createElement("script");
+  s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+  s.async = true;
+  document.head.appendChild(s);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { window.dataLayer.push(arguments); };
+  window.gtag("js", new Date());
+  window.gtag("config", GA_ID);
+}
+
+// =============================================================================
 // CONSTANTS
 // =============================================================================
 const C = {
@@ -207,6 +226,7 @@ export default function FightDaily() {
   const wakeLockRef = useRef(null);
   const [audioReady, setAudioReady] = useState(false);
   const [view, setView] = useState("timer"); // "timer" | "settings"
+  const [cookieConsent, setCookieConsent] = useState(null); // null | "accepted" | "declined"
 
   const R = () => redraw(n => n + 1);
 
@@ -426,7 +446,23 @@ export default function FightDaily() {
       }
       R();
     }
+    // Cookie consent — load GA if already accepted
+    const consent = localStorage.getItem(COOKIE_KEY);
+    if (consent === "accepted") { setCookieConsent("accepted"); loadGA(); }
+    else if (consent === "declined") setCookieConsent("declined");
+    // else null → show banner
   }, []);
+
+  const handleCookieAccept = () => {
+    localStorage.setItem(COOKIE_KEY, "accepted");
+    setCookieConsent("accepted");
+    loadGA();
+  };
+
+  const handleCookieDecline = () => {
+    localStorage.setItem(COOKIE_KEY, "declined");
+    setCookieConsent("declined");
+  };
 
   const t = T.current;
 
@@ -469,6 +505,9 @@ export default function FightDaily() {
         setSetting={setSetting}
         onBack={() => setView("timer")}
         playPreview={(fn) => fn(initAudio())}
+        cookieBanner={cookieConsent === null && (
+          <CookieBanner onAccept={handleCookieAccept} onDecline={handleCookieDecline} />
+        )}
       />
     );
   }
@@ -477,6 +516,9 @@ export default function FightDaily() {
   return (
     <div style={S.app}>
       <Style />
+      {cookieConsent === null && (
+        <CookieBanner onAccept={handleCookieAccept} onDecline={handleCookieDecline} />
+      )}
 
       <Navbar bordered />
 
@@ -835,10 +877,11 @@ function IconBtn({ onClick, disabled, active, children }) {
 // =============================================================================
 // SETTINGS VIEW
 // =============================================================================
-function SettingsView({ t, setSetting, onBack, playPreview }) {
+function SettingsView({ t, setSetting, onBack, playPreview, cookieBanner }) {
   return (
     <div style={S.appScroll}>
       <Style />
+      {cookieBanner}
 
       <Navbar
         sticky
@@ -997,6 +1040,51 @@ function Toggle({ on }) {
 
 function Separator() {
   return <div style={{ height: 1, background: "#1a1a1a", margin: "4px 0" }} />;
+}
+
+// =============================================================================
+// COOKIE BANNER
+// =============================================================================
+function CookieBanner({ onAccept, onDecline }) {
+  return (
+    <div style={{
+      position: "fixed",
+      bottom: 0, left: 0, right: 0,
+      background: "#171717",
+      borderTop: "1px solid #2a2a2a",
+      padding: "16px 20px",
+      paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)",
+      zIndex: 100,
+      display: "flex", flexDirection: "column", gap: 12,
+    }}>
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 4 }}>
+          Cookies & analytika
+        </div>
+        <div style={{ fontSize: 12, color: "#666", lineHeight: 1.5 }}>
+          Používáme Google Analytics pro sledování návštěvnosti. Data jsou anonymizovaná a neprodáváme je třetím stranám.
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 10 }}>
+        <button onClick={onDecline} style={{
+          flex: 1, height: 40, borderRadius: 10,
+          background: "transparent", border: "1.5px solid #333",
+          color: "#666", fontSize: 13, fontWeight: 600,
+          cursor: "pointer", fontFamily: "inherit",
+        }}>
+          Odmítnout
+        </button>
+        <button onClick={onAccept} style={{
+          flex: 1, height: 40, borderRadius: 10,
+          background: "#FFE600", border: "none",
+          color: "#000", fontSize: 13, fontWeight: 700,
+          cursor: "pointer", fontFamily: "inherit",
+        }}>
+          Přijmout
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // =============================================================================
